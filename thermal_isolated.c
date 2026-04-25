@@ -10,7 +10,7 @@
 #define TEMP_LOW 75.0
 #define NUM_CORES 4
 
-int ISOLATED_CORES[2] = {2, 3};
+int ISOLATED_CORES[2] = {3, 7};  // Logical CPUs 3 and 7 (Physical core 3)
 
 typedef struct {
     pid_t pid;
@@ -134,7 +134,7 @@ void create_pairs() {
         }
     }
 
-    printf("Creating 2 pairs on isolated cores %d and %d:\n",
+    printf("Creating 2 pairs on isolated logical CPUs %d and %d (Physical core 3):\n",
            ISOLATED_CORES[0], ISOLATED_CORES[1]);
 
     for (int i = 0; i < 2; i++) {
@@ -147,7 +147,7 @@ void create_pairs() {
         pin_to_core(cores[i].cold_pid, ISOLATED_CORES[i]);
         kill(cores[i].cold_pid, SIGSTOP);
 
-        printf("  Core %d: HOT=%d, COLD=%d\n",
+        printf("  CPU %d: HOT=%d, COLD=%d\n",
                ISOLATED_CORES[i], cores[i].hot_pid, cores[i].cold_pid);
     }
     printf("\n");
@@ -172,9 +172,9 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, cleanup);
 
     printf("==========================================\n");
-    printf("   Thermal Controller (Isolated Cores)\n");
+    printf("   Thermal Controller (Isolated Core)\n");
     printf("==========================================\n");
-    printf("Isolated cores: %d, %d\n", ISOLATED_CORES[0], ISOLATED_CORES[1]);
+    printf("Isolated logical CPUs: %d, %d (Physical core 3)\n", ISOLATED_CORES[0], ISOLATED_CORES[1]);
     printf("Managing 4 tasks (2 HOT, 2 COLD)\n\n");
 
     detect_hot_cold();
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
         int all_done = 1;
 
         printf("+------+--------+---------+-------------------+\n");
-        printf("| Core |  Temp  | Running | Action            |\n");
+        printf("| CPU  |  Temp  | Running | Action            |\n");
         printf("+------+--------+---------+-------------------+\n");
 
         for (int i = 0; i < 2; i++) {
@@ -201,7 +201,8 @@ int main(int argc, char *argv[]) {
             }
             all_done = 0;
 
-            double temp = get_core_temp(cores[i].core_id);
+            // Both CPUs 3 and 7 are on physical core 3, so read temp from core 3
+            double temp = get_core_temp(3);
             char action[32] = "";
 
             if (cores[i].hot_running) {
